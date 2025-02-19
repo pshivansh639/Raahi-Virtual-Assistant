@@ -1,28 +1,71 @@
-import os
+import speech_recognition as sr
+import pyttsx3
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import pygame
 
+
+
+light = mpimg.imread('light_on.jpg')
+temperature=mpimg.imread('temperature.jpg')
+song=mpimg.imread('song.png')
+
+
+# Initialize speech recognizer and text-to-speech engine
+recognizer = sr.Recognizer()
+engine = pyttsx3.init()
+
+# Function to speak out text
 def speak(text):
-    voice="en-US-AriaNeural"
+    engine.say(text)
+    engine.runAndWait()
 
-    command=f'edge-tts --voice "{voice}" --text "{text}" --write-media "output.mp3"'
+# Function to listen for commands
+def listen_command():
+    with sr.Microphone() as source:
+        print("Listening...")
+        recognizer.adjust_for_ambient_noise(source)  # Adjust for noise
+        audio = recognizer.listen(source)
+        try:
+            print("Recognizing...")
+            command = recognizer.recognize_google(audio).lower()
+            print("Command:", command)
+            return command
+        except sr.UnknownValueError:
+            print("Sorry, I didn't get that.")
+            return ""
+        except sr.RequestError:
+            print("Could not request results. Check your internet connection.")
+            return ""
 
-    os.system(command)
+# Main function
+def main():
+    while True:
+        command = listen_command()
+        if "lights" in command:
+            speak("Turning on the lights.")
+            plt.imshow(light)
+            plt.show()
+            # Add code to control lights here
+        elif "temperature" in command:
+            speak("Setting temperature to 72 degrees Fahrenheit.")
+            plt.imshow(temperature)
+            plt.show()
+            # Add code to control temperature here
+        elif "song" in command:
+            speak("Playing your favorite music.")
+            pygame.mixer.init()
+            pygame.mixer.music.load('song.mp3')
+            pygame.mixer.music.play()
 
-    pygame.init()
-    pygame.mixer.init()
-    try:
-        pygame.mixer.music.load("output.mp3")
-        pygame.mixer.music.play()
+            while pygame.mixer.music.get_busy():
+                pygame.time.Clock().tick(10)
+            # Add code to play music here
+        elif "stop" in command:
+            speak("Goodbye!")
+            break
+        else:
+            speak("Sorry, I didn't understand that command.")
 
-        while pygame.mixer.music.get_busy():
-            pygame.time.Clock().tick(10)
-        
-    except Exception as e:
-        print(e)
-    
-    finally:
-        pygame.mixer.music.stop()
-        pygame.mixer.quit()
-
-
-speak("Hello I'm Raahi,Your Virtual Assistant. How can i help you?")
+if __name__ == "__main__":
+    main()
